@@ -11,5 +11,7 @@ body {
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
+    background-image: radial-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
