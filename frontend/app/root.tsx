@@ -6,6 +6,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -23,9 +25,27 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+function Providers({ children }: { children: React.ReactNode }) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 0,
+            retry: false,
+            refetchOnWindowFocus: false,
+          },
+        },
+      })
+  );
+  return (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="da">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <Providers>{children}</Providers>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -47,14 +67,14 @@ export default function App() {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let details = "Der opstod en uventet fejl.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message = error.status === 404 ? "404" : "Fejl";
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? "Siden blev ikke fundet."
         : error.statusText || details;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
@@ -62,14 +82,16 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
+    <main className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-white mb-2">{message}</h1>
+        <p className="text-gray-400">{details}</p>
+        {stack && (
+          <pre className="mt-4 text-left text-xs text-gray-500 bg-gray-900 p-4 rounded-xl overflow-x-auto max-w-2xl">
+            <code>{stack}</code>
+          </pre>
+        )}
+      </div>
     </main>
   );
 }
