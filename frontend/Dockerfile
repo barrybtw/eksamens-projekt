@@ -2,7 +2,7 @@ FROM node:20-alpine AS development-dependencies-env
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-COPY . /app
+COPY ./package.json pnpm-lock.yaml /app/
 WORKDIR /app
 RUN pnpm install --frozen-lockfile
 
@@ -18,8 +18,8 @@ FROM node:20-alpine AS build-env
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
+COPY . /app/
 WORKDIR /app
 RUN pnpm run build
 
