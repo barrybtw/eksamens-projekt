@@ -1,0 +1,29 @@
+services:
+  auth-server:
+    build:
+      context: ./AuthenticationServer
+    ports:
+      - "5110:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      AUTH_SERVER_URL: http://auth-server:8080
+      VITE_AUTH_SERVER_URL: http://localhost:5110
+    depends_on:
+      - auth-server
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
