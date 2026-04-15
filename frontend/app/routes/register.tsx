@@ -12,13 +12,15 @@ export function meta() {
 
 const REGISTER_PENDING_STEPS = [
   { text: "Sender registreringsanmodning til backend..." },
-  { text: "Validerer brugernavn og kodeord..." },
+  { text: "Validerer at felter ikke er tomme..." },
+  { text: "Validerer brugernavn (min. 3 tegn)..." },
+  { text: "Validerer kodeord (min. 6 tegn)..." },
+  { text: "Søger i databasen efter brugernavnet..." },
   { text: "Hasher kodeord med bcrypt (work factor 12)..." },
-  { text: "Tjekker om brugernavnet er ledigt..." },
 ];
 
 const REGISTER_SUCCESS_STEPS = [
-  { text: "Brugernavnet var ledigt! Det originale kodeord kasseres..." },
+  { text: "Brugernavnet var ledigt!" },
   { text: "Gemmer ny bruger i databasen..." },
   { text: "Konto oprettet!" },
 ];

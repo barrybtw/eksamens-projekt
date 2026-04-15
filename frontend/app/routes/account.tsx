@@ -23,8 +23,9 @@ const LOGOUT_SUCCESS_STEPS = [
 const CHANGE_PASSWORD_PENDING_STEPS = [
   { text: "Sender kodeordsskift til backend..." },
   { text: "Verificerer din aktive session..." },
-  { text: "Hasher dit nuværende kodeord med bcrypt..." },
-  { text: "Sammenligner med det gemte hash..." },
+  { text: "Slår bruger op i databasen..." },
+  { text: "Verificerer nuværende kodeord med bcrypt..." },
+  { text: "Validerer nyt kodeord (min. 6 tegn)..." },
 ];
 const CHANGE_PASSWORD_SUCCESS_STEPS = [
   { text: "Kodeord korrekt! Hasher det nye kodeord..." },
