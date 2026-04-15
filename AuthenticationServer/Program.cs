@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,10 +26,18 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddOpenApi();
 
-// Trådsikker in-memory brugerdatabase (brugernavn → StoredUser)
-var users = new ConcurrentDictionary<string, StoredUser>(StringComparer.OrdinalIgnoreCase);
+// PostgreSQL via Entity Framework Core
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
+
+// Opret databasetabeller automatisk ved opstart
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -39,7 +47,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("Frontend");
 app.UseSession();
 
-app.MapPost("/register", (RegisterRequest req, HttpContext ctx) =>
+app.MapPost("/register", async (RegisterRequest req, AppDbContext db) =>
 {
     if (string.IsNullOrWhiteSpace(req.Username) || string.IsNullOrWhiteSpace(req.Password))
         return Results.BadRequest(new { error = "Brugernavn og kodeord er påkrævet." });
@@ -50,18 +58,21 @@ app.MapPost("/register", (RegisterRequest req, HttpContext ctx) =>
     if (req.Password.Length < 6)
         return Results.BadRequest(new { error = "Kodeord skal være mindst 6 tegn." });
 
-    var hash = BCrypt.Net.BCrypt.HashPassword(req.Password, workFactor: 12);
-
-    if (!users.TryAdd(req.Username, new StoredUser(req.Username, hash)))
+    var exists = await db.Users.AnyAsync(u => u.Username.ToLower() == req.Username.ToLower());
+    if (exists)
         return Results.Conflict(new { error = "Brugernavnet er allerede taget." });
+
+    var hash = BCrypt.Net.BCrypt.HashPassword(req.Password, workFactor: 12);
+    db.Users.Add(new User { Username = req.Username, PasswordHash = hash });
+    await db.SaveChangesAsync();
 
     return Results.Ok(new { message = "Bruger oprettet." });
 });
 
-app.MapPost("/login", (LoginRequest req, HttpContext ctx) =>
+app.MapPost("/login", async (LoginRequest req, AppDbContext db, HttpContext ctx) =>
 {
-    if (!users.TryGetValue(req.Username, out var user))
-        return Results.Unauthorized();
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == req.Username.ToLower());
+    if (user is null) return Results.Unauthorized();
 
     if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
         return Results.Unauthorized();
@@ -84,13 +95,13 @@ app.MapGet("/me", (HttpContext ctx) =>
     return Results.Ok(new { username });
 });
 
-app.MapPut("/change-password", (ChangePasswordRequest req, HttpContext ctx) =>
+app.MapPut("/change-password", async (ChangePasswordRequest req, AppDbContext db, HttpContext ctx) =>
 {
     var username = ctx.Session.GetString("username");
     if (username is null) return Results.Unauthorized();
 
-    if (!users.TryGetValue(username, out var user))
-        return Results.NotFound(new { error = "Bruger ikke fundet." });
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
+    if (user is null) return Results.NotFound(new { error = "Bruger ikke fundet." });
 
     if (!BCrypt.Net.BCrypt.Verify(req.CurrentPassword, user.PasswordHash))
         return Results.BadRequest(new { error = "Nuværende kodeord er forkert." });
@@ -98,18 +109,24 @@ app.MapPut("/change-password", (ChangePasswordRequest req, HttpContext ctx) =>
     if (req.NewPassword.Length < 6)
         return Results.BadRequest(new { error = "Nyt kodeord skal være mindst 6 tegn." });
 
-    var newHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword, workFactor: 12);
-    users[username] = user with { PasswordHash = newHash };
+    user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword, workFactor: 12);
+    await db.SaveChangesAsync();
 
     return Results.Ok(new { message = "Kodeord ændret." });
 });
 
-app.MapDelete("/delete-account", (HttpContext ctx) =>
+app.MapDelete("/delete-account", async (AppDbContext db, HttpContext ctx) =>
 {
     var username = ctx.Session.GetString("username");
     if (username is null) return Results.Unauthorized();
 
-    users.TryRemove(username, out _);
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
+    if (user is not null)
+    {
+        db.Users.Remove(user);
+        await db.SaveChangesAsync();
+    }
+
     ctx.Session.Clear();
 
     return Results.Ok(new { message = "Bruger slettet." });
@@ -117,7 +134,25 @@ app.MapDelete("/delete-account", (HttpContext ctx) =>
 
 app.Run();
 
-record StoredUser(string Username, string PasswordHash);
+class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public DbSet<User> Users => Set<User>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Username)
+            .IsUnique();
+    }
+}
+
+class User
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = "";
+    public string PasswordHash { get; set; } = "";
+}
+
 record RegisterRequest(string Username, string Password);
 record LoginRequest(string Username, string Password);
 record ChangePasswordRequest(string CurrentPassword, string NewPassword);

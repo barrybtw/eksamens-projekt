@@ -1,4 +1,20 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   auth-server:
     build:
       context: ./AuthenticationServer
@@ -7,6 +23,20 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=authdb;Username=postgres;Password=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  dbgate:
+    image: dbgate/dbgate:latest
+    ports:
+      - "8080:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -27,3 +57,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  pg_data:
