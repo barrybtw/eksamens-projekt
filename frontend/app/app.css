@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html,
@@ -11,7 +12,10 @@ body {
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
-    background-image: radial-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    background-image: radial-gradient(
+      rgb(255 255 255 / 0.04) 1px,
+      transparent 1px
+    );
     background-size: 28px 28px;
   }
 }

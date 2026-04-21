@@ -1,9 +1,6 @@
 const BASE = "http://localhost:5110";
 
-async function request<T>(
-  path: string,
-  options?: RequestInit
-): Promise<T> {
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -37,8 +34,7 @@ export const api = {
       body: JSON.stringify({ username, password }),
     }),
 
-  logout: () =>
-    request<{ message: string }>("/logout", { method: "POST" }),
+  logout: () => request<{ message: string }>("/logout", { method: "POST" }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ message: string }>("/change-password", {

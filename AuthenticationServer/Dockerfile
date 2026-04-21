@@ -9,7 +9,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["AuthenticationServer.csproj", "./"]
 RUN dotnet restore "AuthenticationServer.csproj"
-COPY . .
+COPY --chown=app:app . .
 WORKDIR "/src/"
 RUN dotnet build "./AuthenticationServer.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
@@ -19,5 +19,5 @@ RUN dotnet publish "./AuthenticationServer.csproj" -c $BUILD_CONFIGURATION -o /a
 
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --chown=app:app --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "AuthenticationServer.dll"]
