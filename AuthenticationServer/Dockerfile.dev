@@ -1,0 +1,7 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+WORKDIR /app
+EXPOSE 8080
+COPY ["AuthenticationServer.csproj", "./"]
+RUN dotnet restore "AuthenticationServer.csproj"
+COPY . .
+CMD ["dotnet", "watch", "run", "--no-launch-profile"]
