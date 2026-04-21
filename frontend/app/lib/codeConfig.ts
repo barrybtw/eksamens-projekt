@@ -28,7 +28,7 @@ export const loginCode: CodeConfig = {
   ],
   pendingHighlights: [[1], [3, 4], [6, 7]],
   successHighlights: [[9], [9], [11], [11]],
-  errorHighlights: [3, 4, 6, 7],
+  errorHighlights: [3, 4, 5, 6, 7],
 };
 
 export const registerCode: CodeConfig = {
