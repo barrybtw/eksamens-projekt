@@ -1,5 +1,15 @@
 const BASE = "http://localhost:5110";
 
+function fallbackMessage(status: number): string {
+  if (status === 400) return "Ugyldigt input.";
+  if (status === 401) return "Ikke autoriseret.";
+  if (status === 403) return "Adgang nægtet.";
+  if (status === 404) return "Ressourcen blev ikke fundet.";
+  if (status === 409) return "Konflikt — ressourcen eksisterer allerede.";
+  if (status >= 500) return "Serverfejl. Prøv igen senere.";
+  return "Ukendt fejl.";
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     credentials: "include",
@@ -8,7 +18,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    let message = "Noget gik galt.";
+    let message = fallbackMessage(res.status);
     try {
       const body = await res.json();
       if (body?.error) message = body.error;

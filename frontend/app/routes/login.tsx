@@ -42,9 +42,6 @@ export default function Login() {
 
   const mutation = useMutation({
     mutationFn: () => api.login(username, password),
-    onError: () => {
-      setTimeout(() => setSimVisible(false), 4000);
-    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -103,20 +100,6 @@ export default function Login() {
                 placeholder="••••••••"
                 disabled={mutation.isPending}
               />
-
-              <AnimatePresence>
-                {mutation.isError && !simVisible && (
-                  <motion.p
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="text-rose-400 text-sm py-1"
-                  >
-                    {mutation.error?.message ??
-                      "Forkert brugernavn eller kodeord."}
-                  </motion.p>
-                )}
-              </AnimatePresence>
 
               <button
                 type="submit"

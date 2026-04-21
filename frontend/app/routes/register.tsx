@@ -49,9 +49,6 @@ export default function Register() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
-    onError: () => {
-      setTimeout(() => setSimVisible(false), 4500);
-    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,14 +125,14 @@ export default function Register() {
               />
 
               <AnimatePresence>
-                {(localError || (mutation.isError && !simVisible)) && (
+                {localError && (
                   <motion.p
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="text-rose-400 text-sm py-1"
                   >
-                    {localError || mutation.error?.message}
+                    {localError}
                   </motion.p>
                 )}
               </AnimatePresence>

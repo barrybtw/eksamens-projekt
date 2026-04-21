@@ -72,10 +72,11 @@ app.MapPost("/register", async (RegisterRequest req, AppDbContext db) =>
 app.MapPost("/login", async (LoginRequest req, AppDbContext db, HttpContext ctx) =>
 {
     var user = await db.Users.FirstOrDefaultAsync(u => u.Username.ToLower() == req.Username.ToLower());
-    if (user is null) return Results.Unauthorized();
+    if (user is null)
+        return Results.Json(new { error = "Bruger findes ikke." }, statusCode: 401);
 
     if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-        return Results.Unauthorized();
+        return Results.Json(new { error = "Forkert brugernavn eller kodeord." }, statusCode: 401);
 
     ctx.Session.SetString("username", user.Username);
 

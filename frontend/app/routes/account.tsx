@@ -68,7 +68,6 @@ export default function Account() {
 
   const logoutMutation = useMutation({
     mutationFn: api.logout,
-    onError: () => setTimeout(() => setActiveSim(null), 3000),
   });
 
   const changePasswordMutation = useMutation({
@@ -78,12 +77,10 @@ export default function Account() {
       setNewPassword("");
       setConfirmPassword("");
     },
-    onError: () => setTimeout(() => setActiveSim(null), 4000),
   });
 
   const deleteMutation = useMutation({
     mutationFn: api.deleteAccount,
-    onError: () => setTimeout(() => setActiveSim(null), 3000),
   });
 
   const handleLogout = () => {
@@ -228,15 +225,14 @@ export default function Account() {
                       />
 
                       <AnimatePresence>
-                        {(localError || changePasswordMutation.isError) && (
+                        {localError && (
                           <motion.p
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             className="text-rose-400 text-sm py-1"
                           >
-                            {localError ||
-                              changePasswordMutation.error?.message}
+                            {localError}
                           </motion.p>
                         )}
                       </AnimatePresence>
